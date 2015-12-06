@@ -19,7 +19,7 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var mapView: MKMapView!
     
     //Socket
-    let socket = SocketIOClient(socketURL: "http://192.168.1.106:8900")//"https://floating-savannah-1961.herokuapp.com/")
+    let socket = SocketIOClient(socketURL: "http://192.196.1.106:3000", options: [.Log(true), .ForcePolling(true)])
     var ongoingChat = [(name: String, time:NSDate, lat:CLLocationDegrees?, lon:CLLocationDegrees?)]()
     var username: String?
     var name:String?
@@ -30,8 +30,6 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        self.socket.connect()
         
         self.locationManager.delegate = self
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
@@ -47,78 +45,33 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
         
         tableView.delegate = self
         tableView.dataSource = self
-
-        socket.on("New Location Update") {data, ack in
+        
+        socket.on("connection") {data, ack in
+            print("socket connected")
+        }
+        
+        socket.on("chat message") {data, ack in
             print("Got an update! \(data[0])")
-            self.ongoingChat.append(data[0] as! (name: String, time:NSDate, lat:CLLocationDegrees?, lon:CLLocationDegrees?))
-            self.tableView.reloadData()
+//            self.ongoingChat.append(data[0] as! (name: String, time:NSDate, lat:CLLocationDegrees?, lon:CLLocationDegrees?))
+//            self.tableView.reloadData()
+//            
+            
 //            ack("I got your message, and I'll send my response")!
 //            self.socket.emit("response", "Hello!")
         }
-        socket.connect()
-
-    
-    }
-    
-    func addHandlers() {
-        // Our socket handlers go here
         
-        // Using a shorthand parameter name for closures
+        self.socket.connect()
+        
         self.socket.onAny {
             print("Got event: \($0.event), with items: \($0.items)")
+        
+//            self.ongoingChat.append(data[0] as! (name: String, time:NSDate, lat:CLLocationDegrees?, lon:CLLocationDegrees?))
+//            self.tableView.reloadData()
         }
+
+    
     }
 
-//    func addHandlers() {
-//        self.socket.on("startGame") {[weak self] data, ack in
-//            self?.handleStart()
-//            return
-//        }
-//        
-//        self.socket.on("name") {[weak self] data, ack in
-//            if let name = data[0] as? String {
-//                self?.name = name
-//            }
-//        }
-//        
-//        self.socket.on("playerMove") {[weak self] data, ack in
-//            if let name = data[0] as? String, x = data[1] as? Int, y = data[2] as? Int {
-//                self?.handlePlayerMove(name, coord: (x, y))
-//            }
-//        }
-//        
-//        self.socket.on("win") {[weak self] data, ack in
-//            if let name = data[0] as? String, typeDict = data[1] as? NSDictionary {
-//                self?.handleWin(name, type: typeDict)
-//            }
-//        }
-//        
-//        self.socket.on("draw") {[weak self] data, ack in
-//            self?.handleDraw()
-//            return
-//        }
-//        
-//        self.socket.on("currentTurn") {[weak self] data, ack in
-//            if let name = data[0] as? String {
-//                self?.handleCurrentTurn(name)
-//                
-//            }
-//        }
-//        
-//        self.socket.on("gameReset") {[weak self] data, ack in
-//            let alert = UIAlertView(title: "Play Again?",
-//                message: "Do you want to play another round?", delegate: self,
-//                cancelButtonTitle: "No", otherButtonTitles: "Yes")
-//            self?.resetAck = ack
-//            alert.show()
-//        }
-//        
-//        self.socket.on("gameOver") {data, ack in
-//            exit(0)
-//        }
-//        
-//        self.socket.onAny {print("Got event: \($0.event), with items: \($0.items)")}
-//    }
     
     
     // MARK:- CLLocationManagerDelegate methods
@@ -163,9 +116,10 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
         
         let newElement = (text, NSDate(), lat, lon)
         self.ongoingChat.append(newElement)
-        
-        //AckEmitter has a variadic definition, so you can send multiple things at once if you want.
-        self.socket.emit("location", text, NSDate(), lat!, lon!)
+
+        //testing ack emission with just strings
+        self.socket.emit("chat message", "hey there")
+//        self.socket.emit("chat message", text, NSDate(), lat!, lon!)
         print("ack emitted")
         self.tableView.reloadData()
         let indexPath = NSIndexPath(forRow: self.ongoingChat.count - 1, inSection: 0)
