@@ -48,12 +48,14 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
         tableView.delegate = self
         tableView.dataSource = self
 
-//        socket.on("important message") {data, ack in
-//            print("Message for you! \(data[0])")
-//            ack("I got your message, and I'll send my response")
+        socket.on("New Location Update") {data, ack in
+            print("Got an update! \(data[0])")
+            self.ongoingChat.append(data[0] as! (name: String, time:NSDate, lat:CLLocationDegrees?, lon:CLLocationDegrees?))
+            self.tableView.reloadData()
+//            ack("I got your message, and I'll send my response")!
 //            self.socket.emit("response", "Hello!")
-//        }
-//        socket.connect()
+        }
+        socket.connect()
 
     
     }
@@ -65,13 +67,6 @@ class ChatController: UIViewController, UITableViewDataSource, UITableViewDelega
         self.socket.onAny {
             print("Got event: \($0.event), with items: \($0.items)")
         }
-
-        self.socket.on("startGame") {[weak self] data, ack in
-//            self?.handleStart()
-            return
-        }
-    
-        //[weak self] is a capture list. It tells the compiler that the reference to self in this closure should not add to the reference count of self.
     }
 
 //    func addHandlers() {
